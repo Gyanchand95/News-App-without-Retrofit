@@ -45,18 +45,20 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
 import com.mynewsapp.R
 import com.mynewsapp.model.Article
+import com.mynewsapp.network.ApiConstant
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ApiCallScreen() {
-    var apiState by remember { mutableStateOf<ApiCallState>(ApiCallState.Loading) }
-    val coroutineScope = rememberCoroutineScope()
+    var apiState by remember { mutableStateOf<ApiCallState>(ApiCallState.Loading) } //define the api state for get the response of the API
+    val coroutineScope = rememberCoroutineScope() // Api calling instead of main UI thread
 
+    //calling api in this block
     LaunchedEffect(Unit) {
         coroutineScope.launch {
             apiState = ApiCallState.Loading
-            val result = makeApiCall("https://candidate-test-data-moengage.s3.amazonaws.com/Android/news-api-feed/staticResponse.json")
+            val result = makeApiCall(ApiConstant.BASE_URL)
             apiState = result.fold(
                 onSuccess = { ApiCallState.Success(it) },
                 onFailure = { ApiCallState.Error(it.message ?: "Unknown error") }
@@ -64,6 +66,8 @@ fun ApiCallScreen() {
         }
     }
 
+    //UI screen according to API response showing the UI like at the loading time showing loader
+    // if getting any error then showing error message in text
     Scaffold(
         modifier = Modifier.background(Color.White),
         topBar = {
@@ -79,15 +83,18 @@ fun ApiCallScreen() {
             ) {
                 when (apiState) {
                     is ApiCallState.Loading -> {
+                        //for Api loading state show the Progress Indicator
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator()
                         }
                     }
                     is ApiCallState.Success -> {
+                        //In api success redirect on the list UI
                         val newsResponse = (apiState as ApiCallState.Success).data
                         NewsList(articles = newsResponse.articles)
                     }
                     is ApiCallState.Error -> {
+                        //If getting error then simple add the error message in text view
                         Text(
                             text = (apiState as ApiCallState.Error).error,
                             style = MaterialTheme.typography.bodyLarge,
@@ -103,17 +110,22 @@ fun ApiCallScreen() {
 
 @Composable
 fun NewsList(articles: List<Article>) {
+    //Using for the vertical list
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.background(Color.White)
     ) {
+        //items like the adapter given the item directly set the value of the item in next UI
         items(articles) { article ->
             NewsItem(article)
         }
     }
 }
 
+
+//News Item is the single item of the list
+//We can create the single class or function for the Textview and other components
 @Composable
 fun NewsItem(article: Article) {
     var expanded by remember{
