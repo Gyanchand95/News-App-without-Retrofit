@@ -1,5 +1,8 @@
 package com.mynewsapp.app_ui
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -25,16 +28,22 @@ import com.mynewsapp.network.makeApiCall
 import kotlinx.coroutines.launch
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
+import com.mynewsapp.R
 import com.mynewsapp.model.Article
 import kotlinx.coroutines.launch
 
@@ -56,9 +65,10 @@ fun ApiCallScreen() {
     }
 
     Scaffold(
+        modifier = Modifier.background(Color.White),
         topBar = {
             TopAppBar(
-                title = { Text("API Call Example") }
+                title = { Text("News App") }
             )
         },
         content = { paddingValues ->
@@ -95,7 +105,8 @@ fun ApiCallScreen() {
 fun NewsList(articles: List<Article>) {
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.background(Color.White)
     ) {
         items(articles) { article ->
             NewsItem(article)
@@ -105,32 +116,62 @@ fun NewsList(articles: List<Article>) {
 
 @Composable
 fun NewsItem(article: Article) {
-    Column(
-        modifier = Modifier.fillMaxWidth()
+    var expanded by remember{
+        mutableStateOf(false)
+    }
+    ElevatedCard(
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 10.dp
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow
+                )
+            )
+            .clickable {
+                expanded = !expanded
+            }
     ) {
-        article.urlToImage?.let {
-            Image(
-                painter = rememberImagePainter(it),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                contentScale = ContentScale.Crop
-            )
-        }
-        Text(
-            text = article.title,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-        article.description?.let {
+        Column {
+            article.urlToImage?.let {
+                Image(
+                    painter = rememberImagePainter(it),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
             Text(
-                text = it,
-                fontSize = 16.sp,
-                modifier = Modifier.padding(bottom = 8.dp)
+                text = article.title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodyLarge,
+                fontFamily = FontFamily(Font(R.font.batang_regular)),
+                modifier = Modifier.padding(10.dp)
             )
+            article.description?.let {
+                Text(
+                    text = it,
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily(Font(R.font.batang_regular)),
+                    maxLines = if(!expanded) 3 else 50,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp)
+                        .fillMaxHeight()
+
+                )
+            }
         }
 
     }
+
 }
